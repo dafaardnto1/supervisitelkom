@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  /* Biar transisi warna halus */
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  /* PAKSA MANUAL AGAR PASTI BERUBAH */
+  html:not(.dark) body {
+    background-color: #F9FAFB !important;
+    color: #1f2937 !important;
+  }
+
+  html.dark body {
+    background-color: #030712 !important;
+    color: #f9fafb !important;
+  }
+}
+
+/* Memastikan elemen sistem (scrollbar/input) ikut berubah */
+html.dark {
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: light;
+}
