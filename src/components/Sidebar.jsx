@@ -191,7 +191,7 @@ export default function Sidebar() {
       )}
 
       {/* ── SIDEBAR DESKTOP (always visible, lg ke atas) ── */}
-      <aside className="hidden lg:flex w-64 flex-shrink-0 bg-white dark:bg-[#050E3C]/80 backdrop-blur-sm h-screen border-r border-slate-100 dark:border-white/8 sticky top-0 z-30 transition-colors duration-300 flex-col">
+      <aside className="hidden lg:flex w-64 flex-shrink-0 bg-white dark:bg-[#050E3C]/80 backdrop-blur-sm h-screen border-r border-slate-100 dark:border-white/8 sticky top-0 z-10 transition-colors duration-300 flex-col">
         <SidebarContent />
       </aside>
 
