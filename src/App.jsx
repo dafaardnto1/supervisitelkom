@@ -1,74 +1,114 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { supabase } from './lib/supabase';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import RoleGuard from './components/RoleGuard';
 
-// Import Pages
+// Pages
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import MitraPage from './pages/MitraPage';
-import Storage from './pages/Storage';
-import Statistik from './pages/Statistik';
+import Dashboard from './pages/Dashboard';       // Admin only
+import MitraPage from './pages/MitraPage';       // Admin only
+import Storage from './pages/Storage';           // Admin only
+import Statistik from './pages/Statistik';       // Admin only
+import UserDashboard from './pages/UserDashboard'; // User only
 
-export default function App() {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+// ── Inner component agar bisa pakai useAuth (harus di dalam AuthProvider) ──
+function AppRoutes() {
+  const { session, isAdmin, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-[#F9FAFB] dark:bg-[#030712]">
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="h-12 w-12 bg-red-600 rounded-2xl"></div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Loading Telkom SV...</p>
+          <div className="h-12 w-12 bg-red-600 rounded-2xl" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
+            Loading Telkom SV...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <Router>
+    <Routes>
+      {/* ── Public ── */}
+      <Route
+        path="/login"
+        element={!session
+          ? <Login />
+          : <Navigate to={isAdmin ? '/dashboard' : '/user-dashboard'} replace />
+        }
+      />
 
-      <Routes>
-        <Route 
-          path="/login" 
-          element={!session ? <Login /> : <Navigate to="/dashboard" />} 
-        />
+      {/* ── Admin only ── */}
+      <Route
+        path="/dashboard"
+        element={
+          session
+            ? <RoleGuard allowedRoles={['admin']} redirectTo="/user-dashboard"><Dashboard /></RoleGuard>
+            : <Navigate to="/login" replace />
+        }
+      />
+      <Route
+        path="/mitra"
+        element={
+          session
+            ? <RoleGuard allowedRoles={['admin']} redirectTo="/user-dashboard"><MitraPage /></RoleGuard>
+            : <Navigate to="/login" replace />
+        }
+      />
+      <Route
+        path="/storage"
+        element={
+          session
+            ? <RoleGuard allowedRoles={['admin']} redirectTo="/user-dashboard"><Storage /></RoleGuard>
+            : <Navigate to="/login" replace />
+        }
+      />
+      <Route
+        path="/statistik"
+        element={
+          session
+            ? <RoleGuard allowedRoles={['admin']} redirectTo="/user-dashboard"><Statistik /></RoleGuard>
+            : <Navigate to="/login" replace />
+        }
+      />
 
-        <Route 
-          path="/dashboard" 
-          element={session ? <Dashboard /> : <Navigate to="/login" />} 
-        />
-        
-        <Route 
-          path="/mitra" 
-          element={session ? <MitraPage /> : <Navigate to="/login" />} 
-        />
+      {/* ── User only ── */}
+      <Route
+        path="/user-dashboard"
+        element={
+          session
+            ? <RoleGuard allowedRoles={['user', 'admin']} redirectTo="/login"><UserDashboard /></RoleGuard>
+            : <Navigate to="/login" replace />
+        }
+      />
 
-        <Route 
-          path="/storage" 
-          element={session ? <Storage /> : <Navigate to="/login" />} 
-        />
+      {/* ── Catch-all ── */}
+      <Route
+        path="/"
+        element={
+          !session
+            ? <Navigate to="/login" replace />
+            : <Navigate to={isAdmin ? '/dashboard' : '/user-dashboard'} replace />
+        }
+      />
+      <Route
+        path="*"
+        element={
+          !session
+            ? <Navigate to="/login" replace />
+            : <Navigate to={isAdmin ? '/dashboard' : '/user-dashboard'} replace />
+        }
+      />
+    </Routes>
+  );
+}
 
-        <Route 
-          path="/statistik" 
-          element={session ? <Statistik /> : <Navigate to="/login" />} 
-        />
-
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </Router>
+export default function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
 }
